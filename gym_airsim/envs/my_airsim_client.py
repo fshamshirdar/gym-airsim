@@ -24,13 +24,8 @@ class myAirSimClient(MultirotorClient):
 		start = time.time()
 		return start, duration
 
-	def yaw_right(self, duration):
-		self.rotateByYawRate(30, duration)
-		start = time.time()
-		return start, duration
-
-	def yaw_left(self, duration):
-		self.rotateByYawRate(-30, duration)
+	def yaw(self, duration, speed):
+		self.rotateByYawRate(int(30*speed), duration)
 		start = time.time()
 		return start, duration
 
@@ -50,15 +45,43 @@ class myAirSimClient(MultirotorClient):
 		if action == 0:
 			start, duration = self.straight(1, 4)
 		elif action == 1:
-			start, duration = self.yaw_right(1)
+			start, duration = self.yaw(1, 1)
 		elif action == 2:
-			start, duration = self.yaw_left(1)
+			start, duration = self.yaw(1, -1)
 		else:
 			print ("wrong action: %d" % action)
 
 		while duration > time.time() - start:
 			if self.getCollisionInfo().has_collided == True:
 				return True    
+
+		self.moveByVelocity(0, 0, 0, 1)
+		self.rotateByYawRate(0, 1)
+
+		return collided
+
+	def take_continuous_action(self, action):
+		x = 0
+		while self.getPosition().z_val < -7.0:
+			self.moveToZ(-6, 3)
+			time.sleep(1)
+			# print(self.getPosition().z_val, "and", x)
+			x = x + 1
+			if x > 10: # tried 10 times, has been collided probably
+				return True
+
+		start = time.time()
+		duration = 0 
+		collided = False
+
+		if (abs(action) < 0.3):
+			start, duration = self.straight(1, 4)
+		else:
+			start, duration = self.yaw(1, action)
+
+		while duration > time.time() - start:
+			if self.getCollisionInfo().has_collided == True:
+				return True
 
 		self.moveByVelocity(0, 0, 0, 1)
 		self.rotateByYawRate(0, 1)
@@ -100,7 +123,8 @@ class myAirSimClient(MultirotorClient):
 		cv2.imshow("Test", total)
 		cv2.waitKey(30)
 
-		total = total.reshape(total.shape[0], total.shape[1], -1)
+		total = total / 255.0
+		total = total.reshape(-1, total.shape[0], total.shape[1])
 
 		return total
 

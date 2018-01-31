@@ -16,15 +16,16 @@ class AirSimEnv(gym.Env):
 
 	def __init__(self):
 	#	self.state = (10, 10, 0, 0)
-	#	self.action_space = spaces.Box(low=-1, high=1, shape=(1))
-		self.observation_space = spaces.Box(low=0, high=255, shape=(30, 100, 1))
-		self.state = np.zeros((30, 100, 1), dtype=np.uint8) 
-		self.action_space = spaces.Discrete(3)
+		# self.action_space = spaces.Discrete(3)
+		self.action_space = spaces.Box(low=-1, high=1, shape=(1))
+		self.observation_space = spaces.Box(low=0, high=255, shape=(1, 30, 100))
+		self.state = np.zeros((1, 30, 100), dtype=np.uint8) 
 		self._seed()
 
 		self.client = myAirSimClient()
 
-		self.goal = [100.0, -200.0] # global xy coordinates
+		# self.goal = [100.0, -200.0] # global xy coordinates
+		self.goal = [0.0, 0.0] # global xy coordinates
 		self.distance_before = 100
 		self.steps = 0
 		self.no_episode = 0
@@ -37,10 +38,13 @@ class AirSimEnv(gym.Env):
 	def compute_reward(self, goal):
 		distance_goal = np.sqrt(np.power((self.goal[0]-goal.x_val),2) + np.power((self.goal[1]-goal.y_val),2))
 
-		r = -1
+		r = -1.
 		r = r + (self.distance_before - distance_goal)
             
 		return r, distance_goal
+
+	def set_goal(self, goal):
+		self.goal = goal
 
 	def goal_direction(self, goal, pos):
 		pitch, roll, yaw  = self.client.getPitchRollYaw()
@@ -52,7 +56,7 @@ class AirSimEnv(gym.Env):
 
 	def _step(self, action):
 		self.steps += 1
-		collided = self.client.take_action(action)
+		collided = self.client.take_continuous_action(action)
 		position = self.client.getPosition()
 		goal = self.goal_direction(self.goal, position) 
 
@@ -67,6 +71,8 @@ class AirSimEnv(gym.Env):
 		if distance < 3:
 			done = True
 			reward = 100.0
+
+#		reward = np.clip(reward, -1., 1.)
 
 		self.distance_before = distance
 		self.reward_sum += reward
