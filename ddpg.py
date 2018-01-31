@@ -120,12 +120,12 @@ class DDPG(object):
         self.a_t = action
         return action
 
-    def select_action(self, s_t, decay_epsilon=True):
+    def select_action(self, state, decay_epsilon=True):
 #        obs = torch.from_numpy(s_t).type(dtype).unsqueeze(0) / 255.0
 #        action = self.actor(Variable(obs, volatile=True)).data.max(1)[1].view(1,1)
 
         action = to_numpy(
-            self.actor(to_tensor(np.array([s_t])))
+            self.actor(to_tensor(np.array([state])))
         ).squeeze(0)
 
         print (action)

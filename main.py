@@ -45,7 +45,7 @@ def train(num_iterations, agent, env, evaluate, validate_steps, output, max_epis
         if step <= args.warmup and checkpoint_loaded == False:
             action = agent.random_action()
         else:
-            action = agent.select_action(observation)
+            action = agent.select_action(agent.memory.get_recent_state_and_split(observation))
         
         # env response with next_observation, reward, terminate_info
         observation2, reward, done, info = env.step(action)
@@ -80,7 +80,7 @@ def train(num_iterations, agent, env, evaluate, validate_steps, output, max_epis
 
             agent.memory.append(
                 observation,
-                agent.select_action(observation),
+                agent.select_action(agent.memory.get_recent_state_and_split(observation)),
                 0., False
             )
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     parser.add_argument('--discount', default=0.99, type=float, help='')
     parser.add_argument('--bsize', default=64, type=int, help='minibatch size')
     parser.add_argument('--rmsize', default=6000000, type=int, help='memory size')
-    parser.add_argument('--window_length', default=1, type=int, help='')
+    parser.add_argument('--window_length', default=4, type=int, help='')
     parser.add_argument('--tau', default=0.001, type=float, help='moving average for target network')
     parser.add_argument('--ou_theta', default=0.15, type=float, help='noise theta')
     parser.add_argument('--ou_sigma', default=0.2, type=float, help='noise sigma') 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         np.random.seed(args.seed)
         env.seed(args.seed)
 
-    nb_states = env.observation_space.shape[0] # channels
+    nb_states = args.window_length * env.observation_space.shape[0] # channels
     nb_actions = env.action_space.shape[0]
 
     agent = DDPG(nb_states, nb_actions, args)

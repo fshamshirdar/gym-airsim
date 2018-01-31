@@ -188,8 +188,12 @@ class SequentialMemory(Memory):
         terminal1_batch = []
         state1_batch = []
         for e in experiences:
-            state0_batch.append(e.state0[0])
-            state1_batch.append(e.state1[0])
+#            print (e.state0.shape)
+#            state0_batch.append(e.state0[0])
+#            state1_batch.append(e.state1[0])
+
+            state0_batch.append(np.concatenate(e.state0))
+            state1_batch.append(np.concatenate(e.state1))
             reward_batch.append(e.reward)
             action_batch.append(e.action)
             terminal1_batch.append(0. if e.terminal1 else 1.)
@@ -208,6 +212,13 @@ class SequentialMemory(Memory):
         action_batch = np.asarray(action_batch)
 
         return state0_batch, action_batch, reward_batch, state1_batch, terminal1_batch
+
+    def get_recent_state_and_split(self, current_observation):
+        recent_state = self.get_recent_state(current_observation)
+
+        state = np.concatenate(recent_state)
+
+        return state
 
     def append(self, observation, action, reward, terminal, training=True):
         super(SequentialMemory, self).append(observation, action, reward, terminal, training=training)
