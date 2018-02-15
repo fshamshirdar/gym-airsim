@@ -45,7 +45,7 @@ class RingBuffer(object):
 
     def __getitem__(self, idx):
         if idx < 0 or idx >= self.length:
-            raise KeyError()
+            raise KeyError(idx)
         return self.data[(self.start + idx) % self.maxlen]
 
     def append(self, v):
@@ -188,37 +188,20 @@ class SequentialMemory(Memory):
         terminal1_batch = []
         state1_batch = []
         for e in experiences:
-#            print (e.state0.shape)
-#            state0_batch.append(e.state0[0])
-#            state1_batch.append(e.state1[0])
-
-            state0_batch.append(np.concatenate(e.state0))
-            state1_batch.append(np.concatenate(e.state1))
+            state0_batch.append(e.state0)
+            state1_batch.append(e.state1)
             reward_batch.append(e.reward)
             action_batch.append(e.action)
             terminal1_batch.append(0. if e.terminal1 else 1.)
 
         # Prepare and validate parameters.
-#        state0_batch = np.array(state0_batch).reshape(batch_size,-1)
-#        state1_batch = np.array(state1_batch).reshape(batch_size,-1)
-#        terminal1_batch = np.array(terminal1_batch).reshape(batch_size,-1)
-#        reward_batch = np.array(reward_batch).reshape(batch_size,-1)
-#        action_batch = np.array(action_batch).reshape(batch_size,-1)
-
-        state0_batch = np.asarray(state0_batch)
-        state1_batch = np.asarray(state1_batch)
-        terminal1_batch = np.asarray(terminal1_batch).reshape(batch_size, -1)
-        reward_batch = np.asarray(reward_batch).reshape(batch_size, -1)
-        action_batch = np.asarray(action_batch)
+        state0_batch = np.array(state0_batch).reshape(batch_size,-1)
+        state1_batch = np.array(state1_batch).reshape(batch_size,-1)
+        terminal1_batch = np.array(terminal1_batch).reshape(batch_size,-1)
+        reward_batch = np.array(reward_batch).reshape(batch_size,-1)
+        action_batch = np.array(action_batch).reshape(batch_size,-1)
 
         return state0_batch, action_batch, reward_batch, state1_batch, terminal1_batch
-
-    def get_recent_state_and_split(self, current_observation):
-        recent_state = self.get_recent_state(current_observation)
-
-        state = np.concatenate(recent_state)
-
-        return state
 
     def append(self, observation, action, reward, terminal, training=True):
         super(SequentialMemory, self).append(observation, action, reward, terminal, training=training)
@@ -281,3 +264,39 @@ class EpisodeParameterMemory(Memory):
         config = super(SequentialMemory, self).get_config()
         config['limit'] = self.limit
         return config
+
+class EpisodicMemory(Memory):
+    def __init__(self, capacity, max_episode_length, **kwargs):
+        super(EpisodicMemory, self).__init__(**kwargs)
+        # Max number of transitions possible will be the memory capacity, could be much less
+        self.max_episode_length = max_episode_length
+        self.num_episodes = capacity // max_episode_length
+        self.memory = RingBuffer(self.num_episodes)
+        self.trajectory = [] # Temporal list of episode
+
+    def append(self, state0, action, reward, terminal, training=True):
+        self.trajectory.append(Experience(state0=state0, action=action, reward=reward, state1=None, terminal1=terminal)) # 
+        if len(self.trajectory) >= self.max_episode_length:
+            self.memory.append(self.trajectory)
+            self.trajectory = []
+
+    def sample(self, batch_size, maxlen=None):
+        batch = [self.sample_trajectory(maxlen=maxlen) for _ in range(batch_size)]
+        minimum_size = min(len(trajectory) for trajectory in batch)
+        batch = [trajectory[:minimum_size] for trajectory in batch]  # Truncate trajectories
+        return list(map(list, zip(*batch)))  # Transpose so that timesteps are packed together
+
+    def sample_trajectory(self, maxlen=0):
+        e = random.randrange(len(self.memory))
+        mem = self.memory[e]
+        T = len(mem)
+        if T > 0:
+            # Take a random subset of trajectory if maxlen specified, otherwise return full trajectory
+            if maxlen > 0 and T > maxlen + 1:
+                t = random.randrange(T - maxlen - 1)  # Include next state after final "maxlen" state
+                return mem[t:t + maxlen + 1]
+            else:
+                return mem
+
+    def __len__(self):
+        return sum(len(self.memory[idx]) for idx in range(len(self.memory)))
