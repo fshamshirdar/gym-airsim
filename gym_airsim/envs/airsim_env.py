@@ -26,7 +26,7 @@ class AirSimEnv(gym.Env):
 
 		# self.goal = [100.0, -200.0] # global xy coordinates
 		self.goal = [0.0, 0.0] # global xy coordinates
-		self.distance_before = 100
+		self.distance_before = None
 		self.steps = 0
 		self.no_episode = 0
 		self.reward_sum = 0
@@ -39,7 +39,8 @@ class AirSimEnv(gym.Env):
 		distance_goal = np.sqrt(np.power((self.goal[0]-goal.x_val),2) + np.power((self.goal[1]-goal.y_val),2))
 
 		r = -1.
-		r = r + (self.distance_before - distance_goal)
+                if self.distance_before != None:
+			r = r + (self.distance_before - distance_goal)
             
 		return r, distance_goal
 
@@ -90,6 +91,7 @@ class AirSimEnv(gym.Env):
 		self.steps = 0
 		self.reward_sum = 0
 		self.no_episode += 1
+		self.distance_before = None
 
 		position = self.client.getPosition()
 		goal = self.goal_direction(self.goal, position)

@@ -42,7 +42,7 @@ def train(num_iterations, agent, env, evaluate, validate_steps, output, max_epis
             agent.reset(observation)
 
         # agent pick action ...
-        if step <= args.warmup and checkpoint_loaded == False:
+        if step <= args.warmup:
             action = agent.random_action()
         else:
             action = agent.select_action(agent.memory.get_recent_state_and_split(observation))
@@ -145,7 +145,8 @@ if __name__ == "__main__":
 
     agent = DDPG(nb_states, nb_actions, args)
     evaluate = Evaluator(args.validate_episodes, 
-        args.validate_steps, args.output, max_episode_length=args.max_episode_length)
+       args.validate_steps, args.output, window_length=args.window_length, max_episode_length=args.max_episode_length)
+#    evaluate = None
 
     if args.mode == 'train':
         train(args.train_iter, agent, env, evaluate, 
