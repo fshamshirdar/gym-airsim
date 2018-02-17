@@ -280,7 +280,7 @@ class EpisodicMemory(Memory):
             self.memory.append(self.trajectory)
             self.trajectory = []
 
-    def sample(self, batch_size, maxlen=None):
+    def sample(self, batch_size, maxlen=0):
         batch = [self.sample_trajectory(maxlen=maxlen) for _ in range(batch_size)]
         minimum_size = min(len(trajectory) for trajectory in batch)
         batch = [trajectory[:minimum_size] for trajectory in batch]  # Truncate trajectories

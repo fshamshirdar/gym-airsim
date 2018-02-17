@@ -82,7 +82,7 @@ class RDPG(object):
                 state, reward, done, info = self.env.step(action)
                 state = deepcopy(state)
 
-                self.env.render()
+                # self.env.render()
 
                 # agent observe and update policy
                 self.memory.append(state0, action, reward, done)
@@ -134,11 +134,11 @@ class RDPG(object):
         policy_loss_total = 0
         value_loss_total = 0
         for t in range(len(experiences) - 1): # iterate over episodes
-            target_cx = Variable(torch.zeros(self.batch_size, 50)).type(FLOAT)
-            target_hx = Variable(torch.zeros(self.batch_size, 50)).type(FLOAT)
+            target_cx = Variable(torch.zeros(self.batch_size, 512)).type(FLOAT)
+            target_hx = Variable(torch.zeros(self.batch_size, 512)).type(FLOAT)
 
-            cx = Variable(torch.zeros(self.batch_size, 50)).type(FLOAT)
-            hx = Variable(torch.zeros(self.batch_size, 50)).type(FLOAT)
+            cx = Variable(torch.zeros(self.batch_size, 512)).type(FLOAT)
+            hx = Variable(torch.zeros(self.batch_size, 512)).type(FLOAT)
 
             # we first get the data out of the sampled experience
             state0 = np.stack((trajectory.state0 for trajectory in experiences[t]))
@@ -184,10 +184,9 @@ class RDPG(object):
             policy_loss.backward()
             self.actor_optim.step()
 
-
         # update only once
-#        policy_loss_total /= self.batch_size # divide by number of trajectories
-#        value_loss_total /= self.batch_size # divide by number of trajectories
+        policy_loss_total /= self.batch_size # divide by number of trajectories
+        value_loss_total /= self.batch_size # divide by number of trajectories
 #
 #        self.agent.critic.zero_grad()
 #        value_loss_total.backward()
@@ -196,6 +195,8 @@ class RDPG(object):
 #        self.agent.actor.zero_grad()
 #        policy_loss_total.backward()
 #        self.actor_optim.step()
+
+        prYellow('[Training] mean policy loss: {}, mean value loss: {}'.format(policy_loss_total.data[0], value_loss_total.data[0]))
 
         # Target update
         soft_update(self.agent.actor_target, self.agent.actor, self.tau)

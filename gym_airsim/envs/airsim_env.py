@@ -17,7 +17,7 @@ class AirSimEnv(gym.Env):
 	def __init__(self):
 	#	self.state = (10, 10, 0, 0)
 		# self.action_space = spaces.Discrete(3)
-		self.action_space = spaces.Box(low=-1, high=1, shape=(1))
+		self.action_space = spaces.Box(low=-1, high=1, shape=(1,))
 		self.observation_space = spaces.Box(low=0, high=255, shape=(1, 30, 100))
 		self.state = np.zeros((1, 30, 100), dtype=np.uint8) 
 		self._seed()
