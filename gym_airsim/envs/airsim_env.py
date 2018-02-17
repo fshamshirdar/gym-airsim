@@ -17,7 +17,7 @@ class AirSimEnv(gym.Env):
 	def __init__(self):
 	#	self.state = (10, 10, 0, 0)
 		# self.action_space = spaces.Discrete(3)
-		self.action_space = spaces.Box(low=-1, high=1, shape=(1))
+		self.action_space = spaces.Box(low=-1, high=1, shape=(1,))
 		self.observation_space = spaces.Box(low=0, high=255, shape=(1, 30, 100))
 		self.state = np.zeros((1, 30, 100), dtype=np.uint8) 
 		self._seed()
@@ -39,7 +39,7 @@ class AirSimEnv(gym.Env):
 		distance_goal = np.sqrt(np.power((self.goal[0]-goal.x_val),2) + np.power((self.goal[1]-goal.y_val),2))
 
 		r = -1.
-                if self.distance_before != None:
+		if self.distance_before != None:
 			r = r + (self.distance_before - distance_goal)
             
 		return r, distance_goal

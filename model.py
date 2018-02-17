@@ -32,8 +32,8 @@ class Actor(nn.Module):
         x = F.relu(self.conv3(x))
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
-	x = F.tanh(self.fc2(x))
-	return x
+        x = F.tanh(self.fc2(x))
+        return x
 
 class Critic(nn.Module):
     def __init__(self, nb_states, nb_actions, init_w=3e-3):
@@ -51,7 +51,7 @@ class Critic(nn.Module):
     def init_weights(self, init_w):
         self.fcs1.weight.data = fanin_init(self.fcs1.weight.data.size())
         self.fca1.weight.data = fanin_init(self.fca1.weight.data.size())
-	self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
+        self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
         self.fc3.weight.data.uniform_(-init_w, init_w)
     
     def forward(self, xs):

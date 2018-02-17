@@ -172,7 +172,7 @@ class DDPG(object):
         }, output + "/checkpoint.%d.tar" % step)
 
     def save_checkpoint(self, state, filename):
-	torch.save(state, filename)
+        torch.save(state, filename)
 
     def seed(self,s):
         torch.manual_seed(s)
